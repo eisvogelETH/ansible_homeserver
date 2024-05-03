@@ -2,12 +2,6 @@
 - hosts: all
   become: yes
 
-  pre_tasks:
-    - debug:
-        var: lan_base
-
-    - meta: end_play
-
   roles:
     - role: system
 
