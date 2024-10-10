@@ -1,0 +1,20 @@
+networks:
+  proxy:
+    external: true 
+
+include:
+{% if "media/jellyfin/docker-compose.yaml" in compose_projects %}
+  - path: './jellyfin/docker-compose.yaml'
+{% endif %}
+
+{% if "media/immich/docker-compose.yaml" in compose_projects %}
+  - path: './immich/docker-compose.yaml'
+{% endif %}
+
+{% if "media/nextcloud/docker-compose.yaml" in compose_projects %}
+  - path: './nextcloud/docker-compose.yaml'
+{% endif %}
+
+{% if "media/paperless-ngx/docker-compose.yaml" in compose_projects %}
+  - path: './paperless-ngx/docker-compose.yaml'
+{% endif %}

@@ -1,0 +1,32 @@
+networks:
+  proxy:
+    external: true 
+
+include:
+{% if "infrastructure/traefik/docker-compose.yaml" in compose_projects %}
+  - path: './traefik/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/portainer/docker-compose.yaml" in compose_projects %}
+  - path: './portainer/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/dashy/docker-compose.yaml" in compose_projects %}
+  - path: './dashy/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/pgadmin/docker-compose.yaml" in compose_projects %}
+  - path: './pgadmin/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/sqlitebrowser/docker-compose.yaml" in compose_projects %}
+  - path: './sqlitebrowser/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/duplicati/docker-compose.yaml" in compose_projects %}
+  - path: './duplicati/docker-compose.yaml'
+{% endif %}
+
+{% if "infrastructure/cloudflared/docker-compose.yaml" in compose_projects %}
+  - path: './cloudflared/docker-compose.yaml'
+{% endif %}

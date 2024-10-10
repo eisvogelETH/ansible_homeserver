@@ -1,0 +1,106 @@
+networks:
+  nextcloud:
+    external: true 
+  
+services:
+  nextcloud-db:
+    image: postgres:16
+    restart: always
+    container_name: nextcloud_db
+    networks:
+      - nextcloud
+    environment:
+      - POSTGRES_USER={{ nextcloud_user }}
+      - POSTGRES_PASSWORD={{ nextcloud_pw }}
+      - POSTGRES_DB=nextcloud
+    volumes:
+      - "./db:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U {{ nextcloud_user }} -d nextcloud'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3  
+      
+  nextcloud:
+    image: lscr.io/linuxserver/nextcloud:29.0.0
+    container_name: nextcloud
+    environment:
+      - PUID={{ puid }}
+      - PGID={{ pgid }}
+      - TZ={{ timezone }}
+    volumes:  
+      - "./appdata:/config" 
+      - "./data:/data" 
+      - "{{ nextcloud_share }}:/external_data"
+    restart: unless-stopped
+    depends_on:
+      - nextcloud-db
+    links:
+      - nextcloud-db
+    networks:
+      - proxy
+      - nextcloud
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.entrypoints=http"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.nextcloud-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-https-redirect"
+      - "traefik.http.routers.nextcloud-secure.entrypoints=https"
+      - "traefik.http.routers.nextcloud-secure.rule=Host(`nextcloud.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.nextcloud-secure.tls=true"
+      - "traefik.http.routers.nextcloud-secure.service=nextcloud"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      #- "traefik.http.routers.jellyfin-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"
+    ports:
+      - 4443:443
+      
+  nextcloud-collabora:
+    image: collabora/code
+    hostname: nextcloud-collabora
+    container_name: nextcloud-collabora
+    privileged: true
+    restart: unless-stopped
+    environment:
+      - TZ={{ timezone }}
+      - dictionaries=de_DE
+      - VIRTUAL_HOST=office.{{ cf_local_domain }}
+      - aliasgroup1=https://nextcloud.{{ cf_local_domain }}
+      - server_name=office.{{ cf_local_domain }}
+      - username="test"
+      - password="test"
+      - "extra_params=--o:ssl.enable=false --o:ssl.termination=true"
+    networks:
+      - proxy
+      - nextcloud
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.office-secure.entrypoints=https"
+      - "traefik.http.routers.office-secure.rule=Host(`office.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.office-secure.service=office-service"
+      - "traefik.http.routers.office-secure.middlewares=compresstraefik"
+      - "traefik.http.routers.office-secure.tls=true"
+      - "traefik.http.routers.office-secure.tls.certresolver=cloudflare"
+      - "traefik.http.services.office-service.loadbalancer.server.port=9980"
+      - "traefik.http.services.office-service.loadbalancer.passhostheader=true"
+      - "traefik.http.middlewares.compresstraefik.compress=true"
+      
+  nextcloud_db-backup:
+    container_name: nextcloud_db_dumper
+    image: prodrigestivill/postgres-backup-local:16
+    restart: always
+    environment:
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: {{ nextcloud_user }}
+      POSTGRES_PASSWORD: {{ nextcloud_pw }}
+      SCHEDULE: "@daily"
+      POSTGRES_EXTRA_OPTS: '-Z1 --schema=public --blobs --clean --if-exists'
+    volumes:
+      - {{ docker_backups }}/nextcloud_dumps:/backups
+    networks:
+      - nextcloud
+    depends_on:
+      - nextcloud-db

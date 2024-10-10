@@ -1,0 +1,72 @@
+networks:
+  proxy:
+    external: true
+  quantlib:
+    name: quantlib
+
+services:
+{% if "quantlib-jupyter/docker-compose.yaml" in compose_projects %}
+  quantlib:
+    image: quantlib-jupyter-local
+    container_name: quantlib
+    ports:
+      - "9998:9998"
+    volumes:
+      - "./notebook:/notebooks"
+      - "./DataDownloads:/DataDownloads"
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - quantlib_db
+    networks:
+      - quantlib
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.quantlib.entrypoints=http"
+      - "traefik.http.routers.quantlib.rule=Host(`quantlib.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.quantlib-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.quantlib.middlewares=quantlib-https-redirect"
+      - "traefik.http.routers.quantlib-secure.entrypoints=https"
+      - "traefik.http.routers.quantlib-secure.rule=Host(`quantlib.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.quantlib-secure.tls=true"
+      - "traefik.http.routers.quantlib-secure.service=quantlib"
+      - "traefik.http.services.quantlib.loadbalancer.server.port=9998"
+      #- "traefik.http.routers.quantlib-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"
+
+  quantlib_db:
+    container_name: quantlib_db
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER={{ quantlib_user }}
+      - POSTGRES_PASSWORD={{ quantlib_pw }}
+      - POSTGRES_DB=quantlib
+    volumes:
+      - "./quantlib-db:/var/lib/postgresql/data"
+    networks:
+      - quantlib
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U {{ quantlib_user }} -d quantlib'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  quantlib_db-backup:
+    container_name: quantlib_db_dumper
+    image: prodrigestivill/postgres-backup-local:15
+    restart: always
+    environment:
+      POSTGRES_HOST: quantlib_db
+      POSTGRES_DB: quantlib
+      POSTGRES_USER: {{ quantlib_user }}
+      POSTGRES_PASSWORD: {{ quantlib_pw }}
+      SCHEDULE: "@daily"
+      POSTGRES_EXTRA_OPTS: '-Z1 --schema=public --blobs --clean --if-exists'
+    networks:
+      - quantlib
+    volumes:
+      - {{ docker_backups }}/quantlib_dumps:/backups
+    depends_on:
+      - quantlib_db
+{% endif %}

@@ -1,0 +1,94 @@
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    volumes:
+      - {{immich_upload}}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    ports:
+      - 2283:3001
+    depends_on:
+      - redis
+      - database
+    restart: always
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.entrypoints=http"
+      - "traefik.http.routers.immich.rule=Host(`immich.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.immich-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.immich.middlewares=immich-https-redirect"
+      - "traefik.http.routers.immich-secure.entrypoints=https"
+      - "traefik.http.routers.immich-secure.rule=Host(`immich.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.immich-secure.tls=true"
+      - "traefik.http.routers.immich-secure.service=immich"
+      - "traefik.http.services.immich.loadbalancer.server.port=3001"
+      #- "traefik.http.routers.immich-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - ./model-cache:/cache
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - proxy
+
+  redis:
+    container_name: immich_redis
+    image: redis:6.2-alpine
+    restart: always
+    networks:
+      - proxy
+
+  database:
+    container_name: immich_postgres
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    environment:
+      POSTGRES_PASSWORD: {{ immich_db_pw }}
+      POSTGRES_USER: {{ immich_db_user }}
+      POSTGRES_DB: {{ immich_db }}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    restart: always
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    healthcheck:
+      test: pg_isready --dbname='{{ immich_db }}' || exit 1; Chksum="$$(psql --dbname='{{ immich_db }}' --username='{{ immich_db_user }}' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      interval: 5m
+      start_interval: 30s
+      start_period: 5m
+    networks:
+      - proxy
+
+  immich-backup:
+    container_name: immich_db_dumper
+    image: prodrigestivill/postgres-backup-local:14
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_DB: {{ immich_db }}
+      POSTGRES_USER: {{ immich_db_user }}
+      POSTGRES_PASSWORD: {{ immich_db_pw }}
+      SCHEDULE: "@daily"
+      POSTGRES_EXTRA_OPTS: '-Z1 --schema=public --blobs --clean --if-exists'
+    volumes:
+      - {{ docker_backups }}/immich_dumps:/backups
+    depends_on:
+      - database
+    networks:
+      - proxy
+

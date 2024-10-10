@@ -1,0 +1,33 @@
+services:
+  dashy:
+    container_name: Dashy
+
+    # Pull latest image from DockerHub
+    image: lissy93/dashy
+    
+    # Pass in your config file below, by specifying the path on your host machine
+    volumes:
+      - "./config.yml:/app/user-data/conf.yml"
+      - "./item-icons:/app/user-data/item-icons"
+
+    # Set port that web service will be served on. Keep container port as 80
+    ports:
+      - 7575:8080
+
+    # Set any environmental variables
+    environment:
+      - NODE_ENV=production
+    # Specify your user ID and group ID. You can find this by running `id -u` and `id -g`
+      - UID={{ puid }}
+      - GID={{ pgid }}
+
+    # Specify restart policy
+    restart: unless-stopped
+
+    # Configure healthchecks
+    healthcheck:
+      test: ['CMD', 'node', '/app/services/healthcheck']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

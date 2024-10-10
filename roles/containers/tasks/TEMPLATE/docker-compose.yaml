@@ -1,0 +1,8 @@
+networks:
+  proxy:
+    external: true 
+
+include:
+{% if "PARENT/CHILD" in compose_projects %}
+  - path: './CHILD/docker-compose.yaml'
+{% endif %}

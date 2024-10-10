@@ -1,0 +1,16 @@
+services:
+  sqlitebrowser:
+    image: lscr.io/linuxserver/sqlitebrowser:latest
+    container_name: sqlitebrowser
+#    security_opt:
+#      - seccomp:unconfined #optional
+    environment:
+      - PUID={{ puid }}
+      - PGID={{ pgid }}
+      - TZ={{ timezone }}
+    volumes:
+      - ./config:/config
+    ports:
+      - 3200:3000
+      - 3001:3001
+    restart: unless-stopped

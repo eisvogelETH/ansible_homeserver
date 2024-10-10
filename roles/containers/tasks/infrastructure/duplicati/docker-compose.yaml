@@ -1,0 +1,31 @@
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:2.0.7
+    container_name: duplicati
+    environment: 
+      - PUID={{ puid }}
+      - PGID={{ pgid }}
+      - TZ={{ timezone }}
+#      - CLI_ARGS= #optional
+    volumes:
+      - "./appdata/config:/config"
+      - "./backups:/backups"
+      - "./source:/source"
+      - "{{ docker_dir }}:/docker_data"
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.duplicati.entrypoints=http"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.duplicati-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.duplicati.middlewares=duplicati-https-redirect"
+      - "traefik.http.routers.duplicati-secure.entrypoints=https"
+      - "traefik.http.routers.duplicati-secure.rule=Host(`duplicati.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.duplicati-secure.tls=true"
+      - "traefik.http.routers.duplicati-secure.service=duplicati"
+      - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
+      #- "traefik.http.routers.quantlib-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"
+

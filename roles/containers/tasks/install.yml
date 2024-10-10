@@ -1,0 +1,30 @@
+- name: Make sure that the docker folders exist
+  ansible.builtin.file:
+    path: "{{ docker_dir }}/{{ item }}"
+#    owner: "{{ username }}"
+#    group: "{{ username }}"
+    state: directory
+  loop: "{{ compose_up_folders }}"
+
+- name: Copy docker compose files and the config files with a loop
+  template:
+    src: "{{ item }}"
+    dest: "{{ docker_dir }}/{{ item }}"
+  loop: "{{ compose_projects }}"
+
+- name: Create Docker network if it does not exist
+  command: docker network create {{ item }}
+  ignore_errors: yes
+  loop: "{{ docker_networks }}"
+
+- name: Display network creation status
+  debug:
+    msg: "Docker network '{{ item }}' created successfully or it existed."
+  loop: "{{ docker_networks }}"
+
+- name: Docker-compose up with loop
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_dir }}/{{ item }}"
+    files:
+    - docker-compose.yaml
+  loop: "{{ compose_up_folders }}" 

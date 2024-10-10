@@ -1,0 +1,242 @@
+networks:
+  proxy:
+    external: true
+services:
+{% if "arr-stack/docker-compose.yaml" in compose_projects %}
+  vpn:
+    image: qmcgaw/gluetun
+    container_name: vpn
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8888:8888/tcp # HTTP proxy
+      - 8388:8388/tcp # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+      - 8090:8090 # qbittorrent Web UI
+      - 6881:6881 # qbittorrent
+      - 6881:6881/udp # qbittorrent
+      #- 8097:8080 #sabnzbd
+      - 8389:8389/udp # Gluetun-Shadowsocks?
+      - 8389:8389/tcp # Gluetun-Shadowsocks?
+      - 8889:8889/tcp # Gluetun
+    #  - 9696:9696 # prowlarr
+    #  - 9117:9117 # jackett
+      #- 8989:8989 # sonarr
+      #- 7878:7878 # radarr
+      #- 8787:8787 # readarr
+      #- 5055:5055 # jellyseerr
+      # - 8686:8686 # lidarr
+    volumes:
+      - "./gluetun:/gluetun"
+    environment:      
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY={{ wireguard_pk }}
+      - WIREGUARD_ADDRESSES=10.5.0.2/32
+      - UPDATER_PERIOD=24h
+      - TZ={{ timezone }}
+    restart: unless-stopped
+
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+      - UMASK=022
+      - WEBUI_PORT=8090
+    volumes:
+      - ./qbittorrent/config:/config
+      - {{ mediaserver_dir }}/torrents:/data/torrents
+    network_mode: service:vpn
+    labels:
+      - autoheal=true
+    healthcheck:
+      test: curl google.com || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    #  - WEBUI_PORT=8097
+    ports:
+      - 8097:8080
+    volumes:
+      - ./sabnzbd:/config
+      - {{ mediaserver_dir }}/usenet:/data/usenet
+    restart: unless-stopped
+    #network_mode: service:vpn 
+
+  prowlarr:
+    image: hotio/prowlarr:testing
+    container_name: prowlarr
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - ./prowlarr:/config
+    restart: unless-stopped
+    ports:
+      - 9696:9696
+    #network_mode: service:vpn
+    depends_on:
+      #- vpn
+      - qbittorrent
+      - sabnzbd
+  
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - PUID={{ puid }}
+      - PGID={{ puid }}
+      - LOG_LEVEL=debug
+      - TZ={{ timezone }}
+    volumes:
+      - ./jellyseerr/config:/app/config
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+    #network_mode: service:vpn
+    depends_on:
+      - sonarr
+      - radarr
+
+  requestrr:
+    image: hotio/requestrr:latest
+    container_name: requestrr
+    environment:
+      - PUID={{ puid }}
+      - PGID={{ pgid }}
+      - TZ={{ timezone }}
+    volumes:
+      - ./requestrr/config:/config
+    ports:
+      - 4545:4545
+    restart: unless-stopped
+    depends_on:
+      - sonarr
+      - radarr
+      - lidarr
+      - jellyseerr
+
+  notifiarr:
+    container_name: notifiarr
+    hostname: notifiarr
+    image: golift/notifiarr
+    restart: unless-stopped
+    ports:
+      - 5454:5454
+    volumes:
+      - ./notifiarr:/config
+      - /var/run/utmp:/var/run/utmp
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./sonarr/config:/config
+      - ./sonarr/sma:/usr/local/sma/config
+      - {{ mediaserver_dir }}:/data
+    restart: unless-stopped
+    ports:
+      - 8989:8989
+    #network_mode: service:vpn
+    depends_on:
+      - qbittorrent
+      - sabnzbd
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - "./radarr3/config:/config"
+      - "./radarr3/sma:/usr/local/sma/config"
+      - {{ mediaserver_dir }}:/data
+    restart: unless-stopped
+    ports:
+      - 7878:7878
+    #network_mode: service:vpn
+    depends_on:
+      - qbittorrent
+      - sabnzbd
+
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./readarr/books/config:/config
+      - {{ mediaserver_dir }}:/data
+      - ./readarr/books/custom-services.d:/custom-services.d
+      - ./readarr/books/custom-cont-init.d:/custom-cont-init.d
+    restart: unless-stopped
+    ports:
+      - 8787:8787
+    depends_on:
+      - qbittorrent
+      - sabnzbd
+
+  readarr_audiobooks:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr_audio
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./readarr/audiobooks/config:/config
+      - {{ mediaserver_dir }}:/data
+      - ./readarr/audiobooks/custom-services.d:/custom-services.d
+      - ./readarr/audiobooks/custom-cont-init.d:/custom-cont-init.d
+    restart: unless-stopped
+    ports:
+      - 8788:8787
+    depends_on:
+      - qbittorrent
+      - sabnzbd
+
+  lidarr:
+    container_name: lidarr
+    image: lscr.io/linuxserver/lidarr:latest
+    environment:
+      - PUID={{ media_uid }}
+      - PGID={{ media_gid }}
+      - TZ={{ timezone }}
+    volumes:
+      - ./lidarr/config:/config
+      - {{ mediaserver_dir }}:/data
+      - ./lidarr/custom-services.d:/custom-services.d
+      - ./lidarr/custom-cont-init.d:/custom-cont-init.d
+    restart: unless-stopped
+    #network_mode: service:vpn
+    ports:
+      - 8686:8686
+    depends_on:
+      - qbittorrent
+      - sabnzbd
+{% endif %}

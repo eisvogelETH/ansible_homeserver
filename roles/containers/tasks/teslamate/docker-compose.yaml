@@ -1,0 +1,89 @@
+networks:
+  proxy:
+    external: true 
+  teslmate:
+    name: teslamate
+
+services:
+{% if "teslamate/docker-compose.yaml" in compose_projects %}
+  teslamate:
+    container_name: teslamate
+    image: teslamate/teslamate:latest
+    restart: always
+    environment:
+      - ENCRYPTION_KEY={{ teslamate_key }}
+      - DATABASE_USER={{ teslamate_user }}
+      - DATABASE_PASS={{ teslamate_pw }}
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate_db
+      - MQTT_HOST=mqtt
+    ports:
+      - 4000:4000
+    volumes:
+      - "./import:/opt/app/import"
+    cap_drop:
+      - all
+
+  teslamate_db:
+    container_name: teslamate_db
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER={{ teslamate_user }}
+      - POSTGRES_PASSWORD={{ teslamate_pw }}
+      - POSTGRES_DB=teslamate
+    volumes:
+      - "./teslamate-db:/var/lib/postgresql/data"
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U {{ teslamate_user }} -d teslamate'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  grafana:
+    container_name: teslamate-grafana
+    image: teslamate/grafana:latest
+    restart: always
+    environment:
+      - DATABASE_USER={{ teslamate_user }}
+      - DATABASE_PASS={{ teslamate_pw }}
+      - DATABASE_NAME=teslamate
+      - DATABASE_HOST=teslamate_db
+    ports:
+      - 3000:3000
+    volumes:
+      - "./teslamate-grafana-data:/var/lib/grafana"
+      - "./teslamate-grafana-data/plugins:/var/lib/grafana/plugins"
+
+  mqtt:
+    container_name: mqtt
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto-no-auth.conf
+    ports:
+      - 1883:1883
+      - 9001:9001
+    volumes:
+      - "./mosquitto:/mosquitto"
+      - "./mosquitto/log:/mosquitto/log"
+      - "./mosquitto/data:/mosquitto/data"
+      
+  teslamate_db-backup:
+    container_name: teslamate_db_dumper
+    image: prodrigestivill/postgres-backup-local:15
+    restart: always
+    environment:
+      POSTGRES_HOST: teslamate_db
+      POSTGRES_DB: teslamate
+      POSTGRES_USER: {{ teslamate_user }}
+      POSTGRES_PASSWORD: {{ teslamate_pw }}
+      SCHEDULE: "@daily"
+      POSTGRES_EXTRA_OPTS: '-Z1 --schema=public --blobs --clean --if-exists'
+    volumes:
+      - {{ docker_backups }}/teslamate_dumps:/backups
+    depends_on:
+      - teslamate_db
+{% endif %}
+

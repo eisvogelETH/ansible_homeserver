@@ -1,0 +1,41 @@
+networks:
+  proxy:
+    external: true
+
+services:
+{% if "portfolio-performance/docker-compose.yaml" in compose_projects %}
+  portfolio-performance:
+    image: nimra98/portfolio-performance:firefox-nextcloud
+    container_name: portfolio
+    restart: unless-stopped
+    ports:
+      - 5800:5800
+    volumes:
+      - ./config:/config
+      - ./workspace:/opt/portfolio/workspace
+    environment:
+      USER_ID: 1000
+      GROUP_ID: 1000
+      DISPLAY_WIDTH: 1920
+      DISPLAY_HEIGHT: 1080
+      TZ: {{ timezone }}
+      NEXTCLOUD_USER: "{{ nextcloud_user }}"
+      NEXTCLOUD_PASSWORD: "{{ nextcloud_pp_pw }}"
+      NEXTCLOUD_REMOTE_PATH: "/Documents"
+      NEXTCLOUD_URL: "https://nextcloud.{{ cf_local_domain }}"
+    networks:
+      proxy:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portfolioperformance.entrypoints=http"
+      - "traefik.http.routers.portfolioperformance.rule=Host(`portfolio-performance.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.portfolioperformance-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.portfolioperformance.middlewares=portfolioperformance-https-redirect"
+      - "traefik.http.routers.portfolioperformance-secure.entrypoints=https"
+      - "traefik.http.routers.portfolioperformance-secure.rule=Host(`portfolio-performance.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.portfolioperformance-secure.tls=true"
+      - "traefik.http.routers.portfolioperformance-secure.service=portfolioperformance"
+      - "traefik.http.services.portfolioperformance.loadbalancer.server.port=5800"
+      - "traefik.http.routers.quantlib-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"
+{% endif %}

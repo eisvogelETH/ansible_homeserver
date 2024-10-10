@@ -1,0 +1,204 @@
+pageInfo:
+  title: Dashy
+  description: Welcome to your new dashboard!
+  navLinks:
+    - title: GitHub
+      path: https://github.com/Lissy93/dashy
+    - title: Documentation
+      path: https://dashy.to/docs
+appConfig:
+  theme: oblivion
+  layout: vertical
+  iconSize: small
+  language: en
+sections:
+  - name: Media
+    icon: fas fa-image
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: Jellyfin
+        description: Media server
+        icon: hl-jellyfin
+        url: http://{{ localIP }}:8096/
+        target: newtab
+        id: 0_480_jellyfin
+      - title: Audiobookshelf
+        description: audiobooks
+        icon: hl-audiobookshelf
+        url: http://{{ piIP }}:13378
+        target: newtab
+        id: 1_480_audiobookshelf
+      - title: Kavita
+        icon: hl-kavita
+        url: http://{{ piIP }}:5000
+        target: newtab
+        id: 2_480_kavita
+  - name: Downloads
+    icon: fas fa-download
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: SABnzbd
+        description: usenet downloader
+        icon: hl-sabnzbd
+        url: http://{{ localIP }}:8097/sabnzbd
+        target: newtab
+        id: 0_939_sabnzbd
+      - title: qBittorrent
+        icon: hl-qbittorrent
+        url: http://{{ localIP }}:8090
+        target: newtab
+        id: 1_939_qbittorrent
+      - title: Prowlarr
+        icon: hl-prowlarr
+        url: http://{{ localIP }}:9696
+        id: 2_939_prowlarr
+      - title: Readarr
+        description: Book downloader
+        icon: hl-readarr
+        url: http://{{ localIP }}:8787
+        target: newtab
+        statusCheck: true
+        id: 3_939_readarr
+      - title: Radarr
+        description: Movies
+        icon: hl-radarr
+        url: http://{{ localIP }}:7878
+        target: newtab
+        id: 4_939_radarr
+      - title: Sonarr
+        description: Series downloader
+        icon: hl-sonarr
+        url: http://{{ localIP }}:8989
+        target: newtab
+        id: 5_939_sonarr
+      - title: Jellyseerr
+        icon: hl-jellyseerr
+        url: http://{{ localIP }}:5055
+        target: newtab
+        id: 6_939_jellyseerr
+      - title: Requestrr
+        icon: hl-requestrr
+        url: http://{{ localIP }}:4545
+        target: newtab
+        id: 7_939_requestrr
+  - name: System
+    icon: fas fa-regular fa-gear
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: Pi-hole
+        icon: hl-pihole
+        url: http://{{ piIP }}:5353/admin/index.php
+        id: 0_645_pihole
+      - title: Home Assistant
+        icon: hl-home-assistant-alt
+        url: http://{{ piIP }}:8123/
+        target: newtab
+        id: 1_645_homeassistant
+      - title: Portainer
+        icon: hl-portainer
+        url: https://portainer.local.ciric.xyz
+        id: 2_645_portainer
+      - title: Nextcloud
+        icon: hl-nextcloud
+        url: https://nextcloud.local.ciric.xyz
+        target: newtab
+        id: 3_645_nextcloud
+      - title: traefik
+        icon: hl-traefik
+        url: https://traefik.local.ciric.xyz
+        target: newtab
+        id: 4_645_traefik
+      - title: pgadmin
+        icon: hl-pgadmin
+        url: http://{{ localIP }}:8898
+        target: newtab
+        id: 5_645_pgadmin
+      - title: PiKVM
+        icon: hl-pikvm
+        url: https://192.168.0.63/kvm/#
+        target: newtab
+        id: 6_645_pikvm
+  - name: Files and Data
+    icon: fas fa-file
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: FileBrowser
+        icon: hl-filebrowser
+        url: http://{{ localIP }}:8188/
+        target: newtab
+        id: 0_1248_filebrowser
+      - title: Grafana
+        icon: hl-grafana
+        url: http://{{ localIP }}:3000
+        id: 1_1248_grafana
+      - title: Teslamate
+        icon: hl-teslamate
+        url: http://{{ localIP }}:4000
+        target: newtab
+        id: 2_1248_teslamate
+      - title: Duplicati
+        icon: hl-duplicati
+        url: http://{{ localIP }}:8200
+        target: newtab
+        id: 3_1248_duplicati
+      - title: mealie
+        icon: hl-mealie
+        url: http://{{ localIP }}:9925/
+        target: newtab
+        id: 4_1248_mealie
+      - title: immich
+        icon: hl-immich
+        url: http://{{ localIP }}:2283/
+        target: newtab
+        id: 5_1248_immich
+      - title: quantlib
+        icon: hl-jupyter
+        url: http://{{ localIP }}:9998/
+        target: newtab
+        statusCheck: true
+        id: 6_1248_quantlib
+  - name: Financials
+    icon: fas fa-money-bill
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: Firefly
+        icon: hl-firefly
+        url: http://{{ localIP }}:8880
+        target: newtab
+        id: 0_1016_firefly
+      - title: Ghostfolio
+        icon: hl-ghostfolio
+        url: http://{{ localIP }}:3333
+        target: newtab
+        id: 1_1016_ghostfolio
+      - title: Portfolio Performance
+        icon: >-
+          https://user-images.githubusercontent.com/7804464/108363747-8eb3b400-71f5-11eb-983d-d55f11d965fc.png
+        url: https://portfolio-performance.local.ciric.xyz/
+        target: newtab
+        id: 2_1016_portfolioperformance

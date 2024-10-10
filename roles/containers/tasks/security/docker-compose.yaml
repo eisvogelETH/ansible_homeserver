@@ -1,0 +1,12 @@
+networks:
+  proxy:
+    external: true 
+
+include:
+{% if "security/authentik/docker-compose.yaml" in compose_projects %}
+  - path: './authentik/docker-compose.yaml'
+{% endif %}
+
+{% if "security/vaultwarden/docker-compose.yaml" in compose_projects %}
+  - path: './vaultwarden/docker-compose.yaml'
+{% endif %}
