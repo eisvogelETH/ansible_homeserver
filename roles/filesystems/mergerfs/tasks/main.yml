@@ -20,8 +20,8 @@
     job: "/usr/local/bin/mergerfs-uncache -s /cache  -d /storage_slow --time-limit 3600 -t 85"
 
 - name: Copy snaprunner.py for syncing and scrubbing with a discord webhook
-  synchronize: 
-    src: templates/snapraid-runner-discord/snapraid-runner.py
+  template: 
+    src: snapraid-runner.py
     dest: "{{ snapraid_runner_discord_bin }}"
 
 - name: install snapraid-runner configuration file
