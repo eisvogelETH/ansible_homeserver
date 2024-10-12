@@ -3,3 +3,16 @@
   service:
     name: sshd
     state: restarted
+
+- name: smb_service
+  service:
+    name: smb
+    state: started
+    enabled: yes
+    
+- name: firewall_port
+  firewalld:
+    service: samba
+    state: enabled
+    immediate: yes
+    permanent: yes
