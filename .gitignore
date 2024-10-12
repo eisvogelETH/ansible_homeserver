@@ -1,6 +1,6 @@
 /files/docker_persistent_data/*
 !/files/docker_persistent_data/.gitkeep
-/hosts
+hosts
 /files/fonts/*
 .DS_Store
 secret.yml
