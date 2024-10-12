@@ -2,3 +2,8 @@
 roles:
   - name: geerlingguy.docker
   - name: geerlingguy.pip
+  - name: geerlingguy.repo-epel
+  - name: geerlingguy.security
+  - name: IronicBadger.snapraid
+collections:
+  - name: vladgh.samba
