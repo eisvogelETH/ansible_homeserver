@@ -1,16 +1,30 @@
 ---
 - hosts: all
   become: yes
-  
   pre_tasks:
-    - debug:
-        var: lan_base
-
-    - meta: end_play
+      - import_tasks: tasks/ssh_juggle_port.yml
+        tags:
+            - always
+            - port
 
   roles:
     - role: system
-
+    - role: geerlingguy.security
     - role: geerlingguy.pip
-
+    #
+    # Filesystems
+    #
+    - role: filesystems/mergerfs
+      when: enable_mergerfs | default(False)
+    - role: filesystems/mounts
+      when: enable_mergerfs | default(False)
+    - role: IronicBadger.snapraid
     - role: geerlingguy.docker
+    - role: containers
+    - role: tailscale
+    
+  tasks:
+    - name: Include Samba Server role
+      ansible.builtin.include_role:
+        name: vladgh.samba.server
+    
