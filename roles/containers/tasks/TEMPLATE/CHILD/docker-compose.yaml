@@ -1,0 +1,15 @@
+service:
+  CHILD:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.CHILD.entrypoints=http"
+      - "traefik.http.routers.CHILD.rule=Host(`portfolio-performance.{{ cf_local_domain }}`)"
+      - "traefik.http.middlewares.CHILD-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.CHILD.middlewares=CHILD-https-redirect"
+      - "traefik.http.routers.CHILD-secure.entrypoints=https"
+      - "traefik.http.routers.CHILD-secure.rule=Host(`portfolio-performance.{{ cf_local_domain }}`)"
+      - "traefik.http.routers.CHILD-secure.tls=true"
+      - "traefik.http.routers.CHILD-secure.service=CHILD"
+      - "traefik.http.services.CHILD.loadbalancer.server.port=5800"
+      - "traefik.http.routers.quantlib-secure.middlewares=middlewares-authentik@file"
+      - "traefik.docker.network=proxy"

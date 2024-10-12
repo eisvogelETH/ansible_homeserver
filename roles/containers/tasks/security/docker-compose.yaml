@@ -10,3 +10,7 @@ include:
 {% if "security/vaultwarden/docker-compose.yaml" in compose_projects %}
   - path: './vaultwarden/docker-compose.yaml'
 {% endif %}
+
+{% if "security/crowdsec/docker-compose.yaml" in compose_projects %}
+  - path: './crowdsec/docker-compose.yaml'
+{% endif %}

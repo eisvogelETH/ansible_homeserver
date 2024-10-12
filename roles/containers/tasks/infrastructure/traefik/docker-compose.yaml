@@ -21,6 +21,7 @@ services:
       - ./traefik.yml:/traefik.yml:ro
       - ./acme.json:/acme.json #create file if it does not exist 
       - ./config.yml:/config.yml:ro
+      - ./logs:/var/log/traefik
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.entrypoints=http"

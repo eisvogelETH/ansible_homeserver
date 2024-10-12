@@ -111,16 +111,16 @@ sections:
         id: 1_645_homeassistant
       - title: Portainer
         icon: hl-portainer
-        url: https://portainer.local.ciric.xyz
+        url: https://portainer.{{ cf_local_domain }}
         id: 2_645_portainer
       - title: Nextcloud
         icon: hl-nextcloud
-        url: https://nextcloud.local.ciric.xyz
+        url: https://nextcloud.{{ cf_local_domain }}
         target: newtab
         id: 3_645_nextcloud
       - title: traefik
         icon: hl-traefik
-        url: https://traefik.local.ciric.xyz
+        url: https://traefik.{{ cf_local_domain }}
         target: newtab
         id: 4_645_traefik
       - title: pgadmin
@@ -199,6 +199,6 @@ sections:
       - title: Portfolio Performance
         icon: >-
           https://user-images.githubusercontent.com/7804464/108363747-8eb3b400-71f5-11eb-983d-d55f11d965fc.png
-        url: https://portfolio-performance.local.ciric.xyz/
+        url: https://portfolio-performance.{{ cf_local_domain }}/
         target: newtab
         id: 2_1016_portfolioperformance

@@ -5,12 +5,17 @@ entryPoints:
   http:
     address: ":80"
     http:
+      middlewares:
+        - crowdsec-bouncer@file
       redirections:
         entryPoint:
           to: https
           scheme: https
   https:
     address: ":443"
+    http:
+      middlewares:
+        - crowdsec-bouncer@file
 serversTransport:
   insecureSkipVerify: true
 providers:
@@ -33,3 +38,8 @@ certificatesResolvers:
         resolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"
+log:
+  level: "INFO"
+  filePath: "/var/log/traefik/traefik.log"
+accessLog:
+  filePath: "/var/log/traefik/access.log"

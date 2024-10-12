@@ -2,7 +2,7 @@ networks:
   firefly_iii:
     driver: bridge
   proxy:
-    name: proxy
+    external: true
 
 services:
   db_firefly:

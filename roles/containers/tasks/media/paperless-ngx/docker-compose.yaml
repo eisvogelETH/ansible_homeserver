@@ -60,8 +60,6 @@ services:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
     container_name: paperless-webserver
-    PUID: {{ puid }}
-    PGID: {{ pgid }}
     depends_on:
       - db
       - broker
@@ -72,9 +70,9 @@ services:
     #  - "8005:8000"
     volumes:
       - ./data:/usr/src/paperless/data
-      - {{ paperless_dir }}/media:/usr/src/paperless/media
+      - {{ paperless_media }}:/usr/src/paperless/media
       - ./export:/usr/src/paperless/export
-      - {{ paperless_dir }}/consume:/usr/src/paperless/consume
+      - ./consume:/usr/src/paperless/consume
     env_file: .env
     environment:
       PAPERLESS_REDIS: redis://broker:6379
