@@ -1,0 +1,44 @@
+---
+- name: Install required system packages
+  apt:
+    name: mergerfs
+    state: present
+    update_cache: yes
+
+- name: Install the uncaching script
+  template:
+      src: mergerfs-uncache.j2
+      dest: /usr/local/bin/mergerfs-uncache
+      mode: 0775
+
+- name: Move data from cache drive to slow pool as it gets full
+  cron:
+    name: "uncache the mergerfs pool"
+    minute: "0"
+    hour: "7"
+    weekday: "1-6"
+    job: "/usr/local/bin/mergerfs-uncache -s /cache  -d /storage_slow --time-limit 3600 -t 85"
+
+- name: Copy snaprunner.py for syncing and scrubbing with a discord webhook
+  synchronize: 
+    src: templates/snapraid-runner-discord/snapraid-runner.py
+    dest: "{{ snapraid_runner_discord_bin }}"
+
+- name: install snapraid-runner configuration file
+  template:
+    src: snapraid-runner.conf.j2
+    dest: "{{ snapraid_runner_discord_conf }}"
+    mode: 0775
+
+- name: setup cron job snapraid-runner
+  cron:
+    job: "{{ item.job }}"
+    name: "{{ item.name }}"
+    weekday: "{{ item.weekday | default ('*') }}"
+    minute: "{{ item.minute | default ('00')}}"
+    hour: "{{ item.hour | default ('00') }}"
+    dom: "{{ item.dom|default('*') }}"
+  with_items:
+    - "{{ snapraid_runner_cron_jobs }}"
+
+
