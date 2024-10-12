@@ -1,5 +1,5 @@
 # ansible-homeserver
-ansible homeserver from eisvogelETH
+Ansible Homeserver from eisvogelETH
 
 Inspired by [notthebee/ansible_homeserver](https://github.com/notthebee/ansible_homeserver)
 

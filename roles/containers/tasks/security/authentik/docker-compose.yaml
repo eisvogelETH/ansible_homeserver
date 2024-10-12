@@ -113,3 +113,5 @@ services:
       - {{ docker_backups }}/authentik_dumps:/backups
     depends_on:
       - auth-db
+    networks:
+      - proxy
